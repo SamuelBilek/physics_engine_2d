@@ -12,8 +12,15 @@ bool Application::IsRunning()
 void Application::Setup()
 {
     m_running = Graphics::OpenWindow();
-    m_particle = std::make_unique<Particle>(50, 100, 1.0);
-    m_particle->radius = 4;
+    auto smallBall{std::make_unique<Particle>(50, 100, 1.0)};
+    smallBall->radius = 4;
+
+    m_particles.push_back(std::move(smallBall));
+
+    // auto bigBall{std::make_unique<Particle>(200, 100, 3.0)};
+    // bigBall->radius = 12;
+
+    // m_particles.push_back(std::move(bigBall));
 
     // TODO: setup objects in the scene
 }
@@ -34,6 +41,14 @@ void Application::Input()
         case SDL_KEYDOWN:
             if (event.key.keysym.sym == SDLK_ESCAPE)
                 m_running = false;
+            if (event.key.keysym.sym == SDLK_UP)
+                m_pushForce.y = -50 * Constants::PIXELS_PER_METER;
+            if (event.key.keysym.sym == SDLK_RIGHT)
+                m_pushForce.x = 50 * Constants::PIXELS_PER_METER;
+            if (event.key.keysym.sym == SDLK_DOWN)
+                m_pushForce.y = 50 * Constants::PIXELS_PER_METER;
+            if (event.key.keysym.sym == SDLK_LEFT)
+                m_pushForce.x = -50 * Constants::PIXELS_PER_METER;
             break;
         }
     }
@@ -60,33 +75,41 @@ void Application::Update()
 
     timePrevFrame = ticks;
 
-    m_particle->acceleration.x = 2.0f * Constants::PIXELS_PER_METER;
-    m_particle->acceleration.y = 9.8f * Constants::PIXELS_PER_METER;
+    Vec2 wind{1.0 * Constants::PIXELS_PER_METER, 0.0};
+    Vec2 gravity(0.0, 9.8 * Constants::PIXELS_PER_METER);
 
-    m_particle->velocity += m_particle->acceleration * deltaTime;
-    m_particle->position += m_particle->velocity * deltaTime;
+    for (auto& particle : m_particles)
+    {
+        particle->AddForce(m_pushForce);
+        particle->AddForce(wind);
+        particle->AddForce(gravity * particle->mass);
 
-    if (m_particle->position.x + m_particle->radius > Graphics::Width())
-    {
-        m_particle->position.x = Graphics::Width() - m_particle->radius;
-        m_particle->velocity.x *= -0.9f;
-    }
-    if (m_particle->position.x - m_particle->radius < 0)
-    {
-        m_particle->position.x = m_particle->radius;
-        m_particle->velocity.x *= -0.9f;
-    }
+        particle->Integrate(deltaTime);
 
-    if (m_particle->position.y + m_particle->radius > Graphics::Height())
-    {
-        m_particle->position.y = Graphics::Height() - m_particle->radius;
-        m_particle->velocity.y *= -0.9f;
+        if (particle->position.x + particle->radius > Graphics::Width())
+        {
+            particle->position.x = Graphics::Width() - particle->radius;
+            particle->velocity.x *= -0.9f;
+        }
+        if (particle->position.x - particle->radius < 0)
+        {
+            particle->position.x = particle->radius;
+            particle->velocity.x *= -0.9f;
+        }
+
+        if (particle->position.y + particle->radius > Graphics::Height())
+        {
+            particle->position.y = Graphics::Height() - particle->radius;
+            particle->velocity.y *= -0.9f;
+        }
+        if (particle->position.y - particle->radius < 0)
+        {
+            particle->position.y = particle->radius;
+            particle->velocity.y *= -0.9f;
+        }
     }
-    if (m_particle->position.y - m_particle->radius < 0)
-    {
-        m_particle->position.y = m_particle->radius;
-        m_particle->velocity.y *= -0.9f;
-    }
+    m_pushForce.x = 0;
+    m_pushForce.y = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -95,7 +118,10 @@ void Application::Update()
 void Application::Render()
 {
     Graphics::ClearScreen(0xFF056263);
-    Graphics::DrawFillCircle(m_particle->position.x, m_particle->position.y, m_particle->radius, 0xFFFFFFFF);
+    for (const auto& particle : m_particles)
+    {
+        Graphics::DrawFillCircle(particle->position.x, particle->position.y, particle->radius, 0xFFFFFFFF);
+    }
     Graphics::RenderFrame();
 }
 

@@ -3,12 +3,14 @@
 #include "./Graphics.h"
 #include "Physics/Particle.h"
 #include <memory>
+#include <vector>
 
 class Application
 {
   private:
     bool m_running{false};
-    std::unique_ptr<Particle> m_particle{nullptr};
+    std::vector<std::unique_ptr<Particle>> m_particles{};
+    Vec2 m_pushForce{};
 
   public:
     bool IsRunning();
