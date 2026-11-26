@@ -1,6 +1,8 @@
 #include "Particle.h"
 #include "Vec2.h"
 
+#include <algorithm>
+
 namespace Force
 {
 Vec2 GenerateDragForce(const Particle& particle, float k)
@@ -17,5 +19,20 @@ Vec2 GenerateDragForce(const Particle& particle, float k)
 Vec2 GenerateFrictionForce(const Particle& particle, float k)
 {
     return -particle.velocity.UnitVector() * k;
+}
+
+Vec2 GenerateGravitationalForce(const Particle& particleA, const Particle& particleB, float G, float minDistance = 0,
+                                float maxDistance = 0)
+{
+    Vec2 d{particleB.position - particleA.position};
+
+    // clamping for the purpose of displaying gravitation pull in small particles
+    float clampedDistanceSquared{d.MagnitudeSquared()};
+    if (maxDistance >= minDistance && minDistance > 0.0f)
+    {
+        clampedDistanceSquared = std::clamp(clampedDistanceSquared, minDistance, maxDistance);
+    }
+
+    return G * (particleA.mass * particleB.mass / clampedDistanceSquared) * d.UnitVector();
 }
 } // namespace Force

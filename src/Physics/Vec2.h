@@ -38,3 +38,5 @@ struct Vec2
     Vec2& operator*=(const float n);
     Vec2& operator/=(const float n);
 };
+
+Vec2 operator*(const float n, const Vec2& v);

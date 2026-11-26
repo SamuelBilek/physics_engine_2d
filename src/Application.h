@@ -13,7 +13,8 @@ class Application
     std::vector<std::unique_ptr<Particle>> m_particles{};
     Vec2 m_pushForce{};
 
-    SDL_Rect m_liquid{};
+    Vec2 m_mouseCursor = Vec2{};
+    bool m_leftMouseButtonDown = false;
 
   public:
     bool IsRunning();

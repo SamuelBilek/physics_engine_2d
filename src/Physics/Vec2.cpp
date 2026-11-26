@@ -167,3 +167,8 @@ Vec2 Vec2::operator-()
     result.y = y * -1;
     return result;
 }
+
+Vec2 operator*(const float n, const Vec2& v)
+{
+    return v * n;
+}
