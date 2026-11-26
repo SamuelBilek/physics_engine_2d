@@ -16,6 +16,7 @@ struct Shape
 
     virtual ShapeType GetType() const = 0;
     virtual std::unique_ptr<Shape> Clone() const = 0;
+    virtual float GetMomentOfInertia() const = 0;
 };
 
 struct CircleShape : public Shape
@@ -25,6 +26,7 @@ struct CircleShape : public Shape
     CircleShape(float radius);
     ShapeType GetType() const override;
     std::unique_ptr<Shape> Clone() const override;
+    float GetMomentOfInertia() const override;
 };
 
 struct PolygonShape : public Shape
@@ -34,6 +36,7 @@ struct PolygonShape : public Shape
     PolygonShape(const std::vector<Vec2>& vertices);
     ShapeType GetType() const override;
     std::unique_ptr<Shape> Clone() const override;
+    float GetMomentOfInertia() const override;
 };
 
 struct BoxShape : public PolygonShape
@@ -44,4 +47,5 @@ struct BoxShape : public PolygonShape
     BoxShape(float width, float height);
     ShapeType GetType() const override;
     std::unique_ptr<Shape> Clone() const override;
+    float GetMomentOfInertia() const override;
 };

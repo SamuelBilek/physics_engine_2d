@@ -97,6 +97,9 @@ void Application::Update()
 
         Vec2 weightForce{0.0f, body->mass * 9.8f * static_cast<float>(Constants::PIXELS_PER_METER)};
         body->AddForce(weightForce);
+
+        float torque{20.0f};
+        body->AddTorque(torque);
     }
 
     for (auto& body : m_bodies)
@@ -126,7 +129,8 @@ void Application::Update()
                 body->velocity.y *= -0.9f;
             }
         }
-        body->Integrate(deltaTime);
+        body->IntegrateLinear(deltaTime);
+        body->IntegrateAngular(deltaTime);
     }
     m_pushForce.x = 0;
     m_pushForce.y = 0;
@@ -139,18 +143,14 @@ void Application::Render()
 {
     Graphics::ClearScreen(0xFF0F0721);
 
-    static float angle{0.0f};
-
     for (const auto& body : m_bodies)
     {
         if (body->shape->GetType() == ShapeType::CIRCLE)
         {
             CircleShape& circleShape{dynamic_cast<CircleShape&>(*body->shape)};
-            Graphics::DrawCircle(body->position.x, body->position.y, circleShape.radius, angle, 0xFFFFFFFF);
+            Graphics::DrawCircle(body->position.x, body->position.y, circleShape.radius, body->rotation, 0xFFFFFFFF);
         }
     }
-
-    angle += 0.01f;
 
     Graphics::RenderFrame();
 }
