@@ -14,11 +14,11 @@ void Application::Setup()
 {
     m_running = Graphics::OpenWindow();
 
-    auto smallBall{std::make_unique<Particle>(200, 100, 4, 1.0)};
-    m_particles.push_back(std::move(smallBall));
+    m_anchor.x = Graphics::Width() / 2.0;
+    m_anchor.y = 30.0f;
 
-    auto bigBall{std::make_unique<Particle>(500, 500, 12, 3.0)};
-    m_particles.push_back(std::move(bigBall));
+    auto bob{std::make_unique<Particle>(Graphics::Width() / 2.0, Graphics::Height() / 2.0, 10, 2.0)};
+    m_particles.push_back(std::move(bob));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -98,13 +98,15 @@ void Application::Update()
     {
         particle->AddForce(m_pushForce);
 
-        Vec2 friction{Force::GenerateFrictionForce(*particle, 10)};
-        particle->AddForce(friction);
+        Vec2 drag{Force::GenerateDragForce(*particle, 0.001)};
+        particle->AddForce(drag);
+
+        Vec2 weightForce{0.0f, particle->mass * 9.8f * static_cast<float>(Constants::PIXELS_PER_METER)};
+        particle->AddForce(weightForce);
     }
 
-    Vec2 attraction{Force::GenerateGravitationalForce(*m_particles[0], *m_particles[1], 1000.0, 5, 100)};
-    m_particles[0]->AddForce(attraction);
-    m_particles[1]->AddForce(-attraction);
+    Vec2 springForce{Force::GenerateSpringForce(*m_particles[0], m_anchor, m_restLength, m_springConstant)};
+    m_particles[0]->AddForce(springForce);
 
     for (auto& particle : m_particles)
     {
@@ -149,10 +151,13 @@ void Application::Render()
             m_particles[0]->position.x, m_particles[0]->position.y, m_mouseCursor.x, m_mouseCursor.y, 0xFF0000FF);
     }
 
+    // Draw spring
+    Graphics::DrawLine(m_anchor.x, m_anchor.y, m_particles[0]->position.x, m_particles[0]->position.y, 0xFF313131);
+    // Draw anchor
+    Graphics::DrawFillCircle(m_anchor.x, m_anchor.y, 5, 0xFF001155);
+    // Draw bob
     Graphics::DrawFillCircle(
-        m_particles[0]->position.x, m_particles[0]->position.y, m_particles[0]->radius, 0xFFAA3300);
-    Graphics::DrawFillCircle(
-        m_particles[1]->position.x, m_particles[1]->position.y, m_particles[1]->radius, 0xFF00FFFF);
+        m_particles[0]->position.x, m_particles[0]->position.y, m_particles[0]->radius, 0xFFFFFFFF);
 
     Graphics::RenderFrame();
 }

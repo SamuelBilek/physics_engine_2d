@@ -16,6 +16,10 @@ class Application
     Vec2 m_mouseCursor = Vec2{};
     bool m_leftMouseButtonDown = false;
 
+    Vec2 m_anchor{};
+    float m_springConstant{100.0f};
+    float m_restLength{400};
+
   public:
     bool IsRunning();
     void Setup();

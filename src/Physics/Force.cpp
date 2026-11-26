@@ -35,4 +35,17 @@ Vec2 GenerateGravitationalForce(const Particle& particleA, const Particle& parti
 
     return G * (particleA.mass * particleB.mass / clampedDistanceSquared) * d.UnitVector();
 }
+
+Vec2 GenerateSpringForce(const Particle& particle, Vec2 anchor, float restLength, float k)
+{
+    Vec2 d{particle.position - anchor};
+    float displacement{d.Magnitude() - restLength};
+
+    return -k * displacement * d.UnitVector();
+}
+
+Vec2 GenerateSpringForce(const Particle& particleA, const Particle& particleB, float restLength, float k)
+{
+    return GenerateSpringForce(particleA, particleB.position, restLength, k);
+}
 } // namespace Force
