@@ -1,8 +1,7 @@
 #pragma once
 
 #include "./Graphics.h"
-#include "Physics/Particle.h"
-#include <SDL.h>
+#include "Physics/Body.h"
 #include <memory>
 #include <vector>
 
@@ -10,7 +9,7 @@ class Application
 {
   private:
     bool m_running{false};
-    std::vector<std::unique_ptr<Particle>> m_particles{};
+    std::vector<std::unique_ptr<Body>> m_bodies{};
     Vec2 m_pushForce{};
 
     Vec2 m_mouseCursor = Vec2{};

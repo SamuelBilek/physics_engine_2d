@@ -14,11 +14,8 @@ void Application::Setup()
 {
     m_running = Graphics::OpenWindow();
 
-    m_anchor.x = Graphics::Width() / 2.0;
-    m_anchor.y = 30.0f;
-
-    auto bob{std::make_unique<Particle>(Graphics::Width() / 2.0, Graphics::Height() / 2.0, 10, 2.0)};
-    m_particles.push_back(std::move(bob));
+    auto body{std::make_unique<Body>(CircleShape{50}, Graphics::Width() / 2.0, Graphics::Height() / 2.0, 1.0)};
+    m_bodies.push_back(std::move(body));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -64,9 +61,9 @@ void Application::Input()
             if (m_leftMouseButtonDown && event.button.button == SDL_BUTTON_LEFT)
             {
                 m_leftMouseButtonDown = false;
-                Vec2 impulseDirection = (m_particles[0]->position - m_mouseCursor).UnitVector();
-                float impulseMagnitude = (m_particles[0]->position - m_mouseCursor).Magnitude() * 5.0;
-                m_particles[0]->velocity = impulseDirection * impulseMagnitude;
+                Vec2 impulseDirection = (m_bodies[0]->position - m_mouseCursor).UnitVector();
+                float impulseMagnitude = (m_bodies[0]->position - m_mouseCursor).Magnitude() * 5.0;
+                m_bodies[0]->velocity = impulseDirection * impulseMagnitude;
             }
             break;
         }
@@ -94,45 +91,42 @@ void Application::Update()
 
     timePrevFrame = ticks;
 
-    for (auto& particle : m_particles)
+    for (auto& body : m_bodies)
     {
-        particle->AddForce(m_pushForce);
+        body->AddForce(m_pushForce);
 
-        Vec2 drag{Force::GenerateDragForce(*particle, 0.001)};
-        particle->AddForce(drag);
-
-        Vec2 weightForce{0.0f, particle->mass * 9.8f * static_cast<float>(Constants::PIXELS_PER_METER)};
-        particle->AddForce(weightForce);
+        Vec2 weightForce{0.0f, body->mass * 9.8f * static_cast<float>(Constants::PIXELS_PER_METER)};
+        body->AddForce(weightForce);
     }
 
-    Vec2 springForce{Force::GenerateSpringForce(*m_particles[0], m_anchor, m_restLength, m_springConstant)};
-    m_particles[0]->AddForce(springForce);
-
-    for (auto& particle : m_particles)
+    for (auto& body : m_bodies)
     {
-        particle->Integrate(deltaTime);
+        if (body->shape->GetType() == ShapeType::CIRCLE)
+        {
+            CircleShape& circleShape{dynamic_cast<CircleShape&>(*body->shape)};
+            if (body->position.x + circleShape.radius > Graphics::Width())
+            {
+                body->position.x = Graphics::Width() - circleShape.radius;
+                body->velocity.x *= -0.9f;
+            }
+            if (body->position.x - circleShape.radius < 0)
+            {
+                body->position.x = circleShape.radius;
+                body->velocity.x *= -0.9f;
+            }
 
-        if (particle->position.x + particle->radius > Graphics::Width())
-        {
-            particle->position.x = Graphics::Width() - particle->radius;
-            particle->velocity.x *= -0.9f;
+            if (body->position.y + circleShape.radius > Graphics::Height())
+            {
+                body->position.y = Graphics::Height() - circleShape.radius;
+                body->velocity.y *= -0.9f;
+            }
+            if (body->position.y - circleShape.radius < 0)
+            {
+                body->position.y = circleShape.radius;
+                body->velocity.y *= -0.9f;
+            }
         }
-        if (particle->position.x - particle->radius < 0)
-        {
-            particle->position.x = particle->radius;
-            particle->velocity.x *= -0.9f;
-        }
-
-        if (particle->position.y + particle->radius > Graphics::Height())
-        {
-            particle->position.y = Graphics::Height() - particle->radius;
-            particle->velocity.y *= -0.9f;
-        }
-        if (particle->position.y - particle->radius < 0)
-        {
-            particle->position.y = particle->radius;
-            particle->velocity.y *= -0.9f;
-        }
+        body->Integrate(deltaTime);
     }
     m_pushForce.x = 0;
     m_pushForce.y = 0;
@@ -145,19 +139,18 @@ void Application::Render()
 {
     Graphics::ClearScreen(0xFF0F0721);
 
-    if (m_leftMouseButtonDown)
+    static float angle{0.0f};
+
+    for (const auto& body : m_bodies)
     {
-        Graphics::DrawLine(
-            m_particles[0]->position.x, m_particles[0]->position.y, m_mouseCursor.x, m_mouseCursor.y, 0xFF0000FF);
+        if (body->shape->GetType() == ShapeType::CIRCLE)
+        {
+            CircleShape& circleShape{dynamic_cast<CircleShape&>(*body->shape)};
+            Graphics::DrawCircle(body->position.x, body->position.y, circleShape.radius, angle, 0xFFFFFFFF);
+        }
     }
 
-    // Draw spring
-    Graphics::DrawLine(m_anchor.x, m_anchor.y, m_particles[0]->position.x, m_particles[0]->position.y, 0xFF313131);
-    // Draw anchor
-    Graphics::DrawFillCircle(m_anchor.x, m_anchor.y, 5, 0xFF001155);
-    // Draw bob
-    Graphics::DrawFillCircle(
-        m_particles[0]->position.x, m_particles[0]->position.y, m_particles[0]->radius, 0xFFFFFFFF);
+    angle += 0.01f;
 
     Graphics::RenderFrame();
 }

@@ -1,5 +1,4 @@
 #include "Particle.h"
-#include <iostream>
 
 Particle::Particle(float x, float y, float mass) : position{x, y}, mass{mass}
 {
