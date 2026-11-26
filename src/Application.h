@@ -2,6 +2,7 @@
 
 #include "./Graphics.h"
 #include "Physics/Particle.h"
+#include <SDL.h>
 #include <memory>
 #include <vector>
 
@@ -11,6 +12,8 @@ class Application
     bool m_running{false};
     std::vector<std::unique_ptr<Particle>> m_particles{};
     Vec2 m_pushForce{};
+
+    SDL_Rect m_liquid{};
 
   public:
     bool IsRunning();

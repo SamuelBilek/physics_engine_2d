@@ -11,12 +11,11 @@ Particle::Particle(float x, float y, float mass) : position{x, y}, mass{mass}
     {
         invMass = 0.0f;
     }
-    std::cout << "Particle constructor called" << std::endl;
 }
 
-Particle::~Particle()
+Particle::Particle(float x, float y, int radius, float mass) : Particle(x, y, mass)
 {
-    std::cout << "Particle destructor called" << std::endl;
+    this->radius = radius;
 }
 
 void Particle::Integrate(float deltaTime)

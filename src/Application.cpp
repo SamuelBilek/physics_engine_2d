@@ -1,5 +1,6 @@
 #include "Application.h"
 #include "Physics/Constants.h"
+#include "Physics/Force.h"
 
 bool Application::IsRunning()
 {
@@ -12,17 +13,17 @@ bool Application::IsRunning()
 void Application::Setup()
 {
     m_running = Graphics::OpenWindow();
-    auto smallBall{std::make_unique<Particle>(50, 100, 1.0)};
-    smallBall->radius = 4;
 
+    auto smallBall{std::make_unique<Particle>(50, 100, 4, 1.0)};
     m_particles.push_back(std::move(smallBall));
 
-    // auto bigBall{std::make_unique<Particle>(200, 100, 3.0)};
-    // bigBall->radius = 12;
+    auto bigBall{std::make_unique<Particle>(200, 100, 12, 3.0)};
+    m_particles.push_back(std::move(bigBall));
 
-    // m_particles.push_back(std::move(bigBall));
-
-    // TODO: setup objects in the scene
+    m_liquid.x = 0;
+    m_liquid.y = Graphics::Height() / 2;
+    m_liquid.w = Graphics::Width();
+    m_liquid.h = Graphics::Height() / 2;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -31,12 +32,18 @@ void Application::Setup()
 void Application::Input()
 {
     SDL_Event event;
+    int mouseX{};
+    int mouseY{};
     while (SDL_PollEvent(&event))
     {
         switch (event.type)
         {
         case SDL_QUIT:
             m_running = false;
+            break;
+        case SDL_MOUSEBUTTONDOWN:
+            SDL_GetMouseState(&mouseX, &mouseY);
+            m_particles.push_back(std::move(std::make_unique<Particle>(mouseX, mouseY, 4, 1.0)));
             break;
         case SDL_KEYDOWN:
             if (event.key.keysym.sym == SDLK_ESCAPE)
@@ -75,14 +82,18 @@ void Application::Update()
 
     timePrevFrame = ticks;
 
-    Vec2 wind{1.0 * Constants::PIXELS_PER_METER, 0.0};
     Vec2 gravity(0.0, 9.8 * Constants::PIXELS_PER_METER);
 
     for (auto& particle : m_particles)
     {
         particle->AddForce(m_pushForce);
-        particle->AddForce(wind);
         particle->AddForce(gravity * particle->mass);
+
+        if (particle->position.y >= m_liquid.y)
+        {
+            Vec2 drag{Force::GenerateDragForce(*particle, 0.03)};
+            particle->AddForce(drag);
+        }
 
         particle->Integrate(deltaTime);
 
@@ -118,6 +129,9 @@ void Application::Update()
 void Application::Render()
 {
     Graphics::ClearScreen(0xFF056263);
+    Graphics::DrawFillRect(
+        m_liquid.x + m_liquid.w / 2, m_liquid.y + m_liquid.h / 2, m_liquid.w, m_liquid.h, 0xFF6E3713);
+
     for (const auto& particle : m_particles)
     {
         Graphics::DrawFillCircle(particle->position.x, particle->position.y, particle->radius, 0xFFFFFFFF);

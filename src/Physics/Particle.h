@@ -16,7 +16,7 @@ struct Particle
     Vec2 sumForces{};
 
     Particle(float x, float y, float mass);
-    ~Particle();
+    Particle(float x, float y, int radius, float mass);
 
     void Integrate(float deltaTime);
 
